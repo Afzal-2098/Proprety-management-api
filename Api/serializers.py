@@ -6,3 +6,5 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyDetail
         fields = '__all__'
+
+        
