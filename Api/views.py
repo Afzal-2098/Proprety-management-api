@@ -6,6 +6,7 @@ from rest_framework.response import Response
 # from django.shortcuts import redirect
 from rest_framework import status
 from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 
 
 @api_view(["GET"])
@@ -26,10 +27,10 @@ def FatchPropertyDetails(request):
 @api_view(["POST"])
 def CreateNewProperty(request):
     if request.method == "POST":
+        state = request.data.get("state")
         serializer = PropertyDetailSerializer(data = request.data)
         if serializer.is_valid():
-            print(serializer)
-            serializer.save()
+            # serializer.save()
             return HttpResponseRedirect(redirect_to="http://127.0.0.1:8000/fetch_property_details/")
             # return redirect("fetchproperty")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -50,6 +51,13 @@ def UpdatePropertyDetails(request):
         return Response(res, status=status.HTTP_400_BAD_REQUEST)
 
 
+STATE_IDS = (
+    ("an", "andaman and nicobar islands"),
+    ("ap", "andhra pradesh"),
+    ("ar", "arunachal pradesh"),
+    ("uk", "uttarakhand"),
+)
+
 @api_view(["GET"])
 def FindCitiesByState(request):
     if request.method == "GET":
@@ -57,18 +65,24 @@ def FindCitiesByState(request):
         state_name = request.data.get("state")
         print(state_id)
         print(state_name)
-        if state_id is not None:
-            prop_dtl = PropertyDetail.objects.get(state_id=state_id)
-            find_serializer = PropertyDetailSerializer(prop_dtl, many=True)
-            return Response(find_serializer.data)
+        cities = []
+        for tup in STATE_IDS:
+            if state_id == tup[0]:
+                state_name = tup[1]
+                prop_dtl = list(PropertyDetail.objects.filter(state_id=state_name))
+                for prop in prop_dtl:
+                    cities.append(prop.city)
+                break
+        # serializer = PropertyDetailSerializer(prop_dtl, many=True)
+        return JsonResponse(cities, safe=False)
 
-        if state_name is not None:
-            prop_dtl = PropertyDetail.objects.filter(state=state_name)
-            find_serializer = PropertyDetailSerializer(prop_dtl, many=True)
-            return Response(find_serializer.data)
+        # if state_name is not None:
+        #     prop_dtl = PropertyDetail.objects.filter(state=state_name)
+        #     find_serializer = PropertyDetailSerializer(prop_dtl, many=True)
+        #     return Response(find_serializer.data)
 
-        else:
-            return Response({"msg":"please provide state id or state name."})
+        # else:
+        # #     return Response({"msg":"please provide state id or state name."})
 
 
 @api_view(["GET"])
